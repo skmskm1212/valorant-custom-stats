@@ -71,6 +71,50 @@
     </section>
 
     <section class="card">
+      <section class="card">
+  <div class="row">
+    <h2>통계</h2>
+    <div class="controls">
+      <button id="tabPlayers" class="tab active">플레이어</button>
+      <button id="tabAgents" class="tab">요원</button>
+      <button id="tabMaps" class="tab">맵</button>
+    </div>
+  </div>
+
+  <div id="panelPlayers" class="panel">
+    <p class="hint">플레이어 표에서 닉네임을 클릭하면 상세가 아래에 뜸.</p>
+    <div id="playerDetail" class="detailBox" style="display:none;"></div>
+  </div>
+
+  <div id="panelAgents" class="panel" style="display:none;">
+    <div class="tableWrap">
+      <table id="agentTable">
+        <thead>
+          <tr>
+            <th>#</th><th>요원</th><th>픽(명)</th><th>픽률</th><th>승률</th>
+            <th>ACS</th><th>ADR</th><th>HS%</th><th>FK</th><th>FD</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="panelMaps" class="panel" style="display:none;">
+    <div class="tableWrap">
+      <table id="mapTable">
+        <thead>
+          <tr>
+            <th>#</th><th>맵</th><th>경기</th><th>승률</th>
+            <th>ACS</th><th>ADR</th><th>HS%</th><th>FK</th><th>FD</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
       <h2>원본(JSON) 확인</h2>
       <pre id="raw"></pre>
     </section>
@@ -79,4 +123,5 @@
   <script src="./app.js"></script>
 </body>
 </html>
+
 
