@@ -162,8 +162,24 @@ async function main() {
 
     matchCountEl.textContent = String(matches.length);
     rawEl.textContent = JSON.stringify(matches.slice(0, 1), null, 2);
+const debugEl = document.getElementById("debug");
+
+const totalPlayerRows = matches.reduce((acc, m) => {
+  const arr = Array.isArray(m.players) ? m.players : [];
+  return acc + arr.length;
+}, 0);
+
+const sampleKeys = (() => {
+  const first = matches?.[0]?.players?.[0];
+  return first ? Object.keys(first).join(", ") : "(no player)";
+})();
+
+debugEl.textContent =
+  `디버그: players 행수=${totalPlayerRows}, player keys=${sampleKeys}`;
 
     stats = summarize(matches);
+    debugEl.textContent += ` / 집계된 닉네임 수=${stats.length}`;
+
     statusEl.textContent = "로드 완료";
 
     const refresh = () => {
@@ -187,3 +203,4 @@ async function main() {
 }
 
 main();
+
