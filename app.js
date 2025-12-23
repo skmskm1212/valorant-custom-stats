@@ -36,3 +36,154 @@ function summarize(matches) {
           wins: 0,
           k: 0, d: 0, a: 0,
           acsSum: 0,
+          adrSum: 0,
+          hsSum: 0,
+          fkSum: 0,
+          fdSum: 0,
+          agents: new Map(), // agent -> count
+        });
+      }
+
+      const s = map.get(nick);
+      s.games += 1;
+      if (p.team && winner && p.team === winner) s.wins += 1;
+
+      const k = Number(p.k ?? 0), d = Number(p.d ?? 0), a = Number(p.a ?? 0);
+      s.k += k; s.d += d; s.a += a;
+
+      s.acsSum += Number(p.acs ?? 0);
+      s.adrSum += Number(p.adr ?? 0);
+      s.hsSum += Number(p.hs ?? 0);
+      s.fkSum += Number(p.fk ?? 0);
+      s.fdSum += Number(p.fd ?? 0);
+
+      const agent = (p.agent || "Unknown").trim();
+      s.agents.set(agent, (s.agents.get(agent) || 0) + 1);
+    }
+  }
+
+  // finalize
+  const out = [];
+  for (const s of map.values()) {
+    s.winrate = s.games ? s.wins / s.games : 0;
+    s.avgAcs = s.games ? s.acsSum / s.games : 0;
+    s.avgAdr = s.games ? s.adrSum / s.games : 0;
+    s.avgHs = s.games ? s.hsSum / s.games : 0;
+    s.avgFk = s.games ? s.fkSum / s.games : 0;
+    s.avgFd = s.games ? s.fdSum / s.games : 0;
+    s.kda = (s.d > 0) ? ((s.k + s.a) / s.d) : (s.k + s.a);
+
+    // top agent
+    let topAgent = "-";
+    let topCnt = -1;
+    for (const [ag, cnt] of s.agents.entries()) {
+      if (cnt > topCnt) { topCnt = cnt; topAgent = ag; }
+    }
+    s.topAgent = topAgent;
+
+    s.rating = calcSimpleRating(s);
+    out.push(s);
+  }
+  return out;
+}
+
+function sortStats(stats, key) {
+  const dir = -1; // desc
+  const getter = {
+    rating: s => s.rating,
+    winrate: s => s.winrate,
+    games: s => s.games,
+    acs: s => s.avgAcs,
+    adr: s => s.avgAdr,
+    hs: s => s.avgHs,
+    kda: s => s.kda,
+    fk: s => s.avgFk,
+    fd: s => s.avgFd,
+  }[key] || (s => s.rating);
+
+  return [...stats].sort((a, b) => {
+    const av = getter(a), bv = getter(b);
+    if (bv !== av) return dir * (bv - av);
+    // tie-breakers
+    if (b.games !== a.games) return b.games - a.games;
+    return a.nick.localeCompare(b.nick);
+  });
+}
+
+function renderTable(stats) {
+  const tbody = document.querySelector("#rankTable tbody");
+  tbody.innerHTML = "";
+
+  stats.forEach((s, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td class="nick">${escapeHtml(s.nick)}</td>
+      <td>${s.games}</td>
+      <td>${s.wins}</td>
+      <td>${pct(s.winrate)}</td>
+      <td>${s.k} / ${s.d} / ${s.a}</td>
+      <td>${fmt1(s.kda)}</td>
+      <td>${fmt0(s.avgAcs)}</td>
+      <td>${fmt1(s.avgAdr)}</td>
+      <td>${fmt1(s.avgHs)}</td>
+      <td>${fmt1(s.avgFk)}</td>
+      <td>${fmt1(s.avgFd)}</td>
+      <td>${escapeHtml(s.topAgent)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function main() {
+  const statusEl = document.getElementById("status");
+  const matchCountEl = document.getElementById("matchCount");
+  const rawEl = document.getElementById("raw");
+  const sortKeyEl = document.getElementById("sortKey");
+  const searchEl = document.getElementById("search");
+
+  let matches = [];
+  let stats = [];
+
+  try {
+    const res = await fetch(DATA_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`fetch failed: ${res.status} ${res.statusText}`);
+    matches = await res.json();
+    if (!Array.isArray(matches)) throw new Error("matches.json must be an array");
+
+    matchCountEl.textContent = String(matches.length);
+    rawEl.textContent = JSON.stringify(matches.slice(0, 1), null, 2);
+
+    stats = summarize(matches);
+    statusEl.textContent = "로드 완료";
+
+    const refresh = () => {
+      const key = sortKeyEl.value;
+      const q = searchEl.value.trim().toLowerCase();
+
+      let filtered = stats;
+      if (q) filtered = stats.filter(s => s.nick.toLowerCase().includes(q));
+
+      const sorted = sortStats(filtered, key);
+      renderTable(sorted);
+    };
+
+    sortKeyEl.addEventListener("change", refresh);
+    searchEl.addEventListener("input", refresh);
+
+    refresh();
+  } catch (e) {
+    statusEl.textContent = `오류: ${e.message}`;
+  }
+}
+
+main();
