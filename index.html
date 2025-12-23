@@ -16,11 +16,12 @@
       </div>
     </header>
 
+    <!-- 플레이어 랭킹 -->
     <section class="card">
       <div class="row">
         <h2>플레이어 랭킹</h2>
         <div class="controls">
-          <label>
+          <label class="ctl">
             정렬
             <select id="sortKey">
               <option value="rating">지표점수</option>
@@ -34,13 +35,13 @@
               <option value="fd">평균 FD</option>
             </select>
           </label>
-          <label>
+
+          <label class="ctl">
             검색
             <input id="search" placeholder="닉네임 검색" />
           </label>
         </div>
       </div>
-<p id="debug" class="hint"></p>
 
       <div class="tableWrap">
         <table id="rankTable">
@@ -66,55 +67,57 @@
       </div>
 
       <p class="hint">
-        지표점수 = (승률 + ACS + ADR + (FK-FD))를 간단히 합친 운영용 점수(초기 버전)
+        지표점수(초기) = 승률 + (ACS/ADR 정규화) + (FK-FD) 보정
       </p>
     </section>
 
+    <!-- 통계 탭 + 개인 상세 -->
     <section class="card">
-      <section class="card">
-  <div class="row">
-    <h2>통계</h2>
-    <div class="controls">
-      <button id="tabPlayers" class="tab active">플레이어</button>
-      <button id="tabAgents" class="tab">요원</button>
-      <button id="tabMaps" class="tab">맵</button>
-    </div>
-  </div>
+      <div class="row">
+        <h2>통계</h2>
+        <div class="controls">
+          <button type="button" id="tabPlayers" class="tab active">플레이어</button>
+          <button type="button" id="tabAgents" class="tab">요원</button>
+          <button type="button" id="tabMaps" class="tab">맵</button>
+        </div>
+      </div>
 
-  <div id="panelPlayers" class="panel">
-    <p class="hint">플레이어 표에서 닉네임을 클릭하면 상세가 아래에 뜸.</p>
-    <div id="playerDetail" class="detailBox" style="display:none;"></div>
-  </div>
+      <div id="panelPlayers" class="panel">
+        <p class="hint">플레이어 랭킹에서 <b>닉네임 클릭</b>하면 아래에 상세가 표시됨.</p>
+        <div id="playerDetail" class="detailBox" style="display:none;"></div>
+      </div>
 
-  <div id="panelAgents" class="panel" style="display:none;">
-    <div class="tableWrap">
-      <table id="agentTable">
-        <thead>
-          <tr>
-            <th>#</th><th>요원</th><th>픽(명)</th><th>픽률</th><th>승률</th>
-            <th>ACS</th><th>ADR</th><th>HS%</th><th>FK</th><th>FD</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
+      <div id="panelAgents" class="panel" style="display:none;">
+        <div class="tableWrap">
+          <table id="agentTable">
+            <thead>
+              <tr>
+                <th>#</th><th>요원</th><th>픽(명)</th><th>픽률</th><th>승률</th>
+                <th>ACS</th><th>ADR</th><th>HS%</th><th>FK</th><th>FD</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
 
-  <div id="panelMaps" class="panel" style="display:none;">
-    <div class="tableWrap">
-      <table id="mapTable">
-        <thead>
-          <tr>
-            <th>#</th><th>맵</th><th>경기</th><th>승률</th>
-            <th>ACS</th><th>ADR</th><th>HS%</th><th>FK</th><th>FD</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-</section>
+      <div id="panelMaps" class="panel" style="display:none;">
+        <div class="tableWrap">
+          <table id="mapTable">
+            <thead>
+              <tr>
+                <th>#</th><th>맵</th><th>경기</th><th>승률</th>
+                <th>ACS</th><th>ADR</th><th>HS%</th><th>FK</th><th>FD</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
+    <!-- 원본 -->
+    <section class="card">
       <h2>원본(JSON) 확인</h2>
       <pre id="raw"></pre>
     </section>
@@ -123,5 +126,3 @@
   <script src="./app.js"></script>
 </body>
 </html>
-
-
