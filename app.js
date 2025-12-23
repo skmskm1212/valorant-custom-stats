@@ -13,12 +13,19 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+function setText(el, text) {
+  if (el) el.textContent = text;
+}
+function requireEl(id) {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`필수 요소 id 누락: #${id}`);
+  return el;
+}
 
 /* ---------- rating (simple) ---------- */
 function calcSimpleRating(s) {
   const winrate = s.games ? (s.wins / s.games) : 0;
 
-  // 대충 범위로 정규화(초기 버전)
   const acsN = clamp((s.avgAcs - 150) / 150, 0, 1); // 150~300
   const adrN = clamp((s.avgAdr - 80) / 120, 0, 1);  // 80~200
   const fkfdN = clamp(((s.avgFk - s.avgFd) + 2) / 4, 0, 1); // -2~+2
@@ -62,9 +69,9 @@ function summarizePlayers(matches) {
 
       s.acsSum += Number(p.acs ?? 0);
       s.adrSum += Number(p.adr ?? 0);
-      s.hsSum += Number(p.hs ?? 0);
-      s.fkSum += Number(p.fk ?? 0);
-      s.fdSum += Number(p.fd ?? 0);
+      s.hsSum  += Number(p.hs  ?? 0);
+      s.fkSum  += Number(p.fk  ?? 0);
+      s.fdSum  += Number(p.fd  ?? 0);
 
       const agent = (p.agent || "Unknown").trim();
       s.agents.set(agent, (s.agents.get(agent) || 0) + 1);
@@ -109,7 +116,7 @@ function sortPlayers(stats, key) {
 
   return [...stats].sort((a, b) => {
     const av = getter(a), bv = getter(b);
-    if (bv !== av) return (bv - av); // desc
+    if (bv !== av) return (bv - av);
     if (b.games !== a.games) return b.games - a.games;
     return a.nick.localeCompare(b.nick);
   });
@@ -144,28 +151,27 @@ function renderPlayersTable(stats) {
   });
 }
 
-/* ---------- summarize agents ---------- */
+/* ---------- agents ---------- */
 function summarizeAgents(matches) {
-  const m = new Map(); // agent -> stats
+  const m = new Map();
   let totalPicks = 0;
 
   for (const match of matches) {
     const winner = match.winner;
     for (const p of (match.players || [])) {
       const agent = (p.agent || "Unknown").trim();
-      if (!m.has(agent)) {
-        m.set(agent, { agent, picks:0, wins:0, games:0, acs:0, adr:0, hs:0, fk:0, fd:0 });
-      }
+      if (!m.has(agent)) m.set(agent, { agent, picks:0, wins:0, games:0, acs:0, adr:0, hs:0, fk:0, fd:0 });
       const s = m.get(agent);
+
       s.picks += 1; totalPicks += 1;
       s.games += 1;
       if (p.team === winner) s.wins += 1;
 
       s.acs += Number(p.acs ?? 0);
       s.adr += Number(p.adr ?? 0);
-      s.hs  += Number(p.hs ?? 0);
-      s.fk  += Number(p.fk ?? 0);
-      s.fd  += Number(p.fd ?? 0);
+      s.hs  += Number(p.hs  ?? 0);
+      s.fk  += Number(p.fk  ?? 0);
+      s.fd  += Number(p.fd  ?? 0);
     }
   }
 
@@ -208,15 +214,14 @@ function renderAgentTable(rows) {
   });
 }
 
-/* ---------- summarize maps ---------- */
+/* ---------- maps ---------- */
 function summarizeMaps(matches) {
-  const m = new Map(); // map -> stats
+  const m = new Map();
 
   for (const match of matches) {
     const mapName = (match.map || "Unknown").trim();
-    if (!m.has(mapName)) {
-      m.set(mapName, { map: mapName, matches:0, wins:0, games:0, acs:0, adr:0, hs:0, fk:0, fd:0 });
-    }
+    if (!m.has(mapName)) m.set(mapName, { map: mapName, matches:0, wins:0, games:0, acs:0, adr:0, hs:0, fk:0, fd:0 });
+
     const s = m.get(mapName);
     s.matches += 1;
 
@@ -227,9 +232,9 @@ function summarizeMaps(matches) {
 
       s.acs += Number(p.acs ?? 0);
       s.adr += Number(p.adr ?? 0);
-      s.hs  += Number(p.hs ?? 0);
-      s.fk  += Number(p.fk ?? 0);
-      s.fd  += Number(p.fd ?? 0);
+      s.hs  += Number(p.hs  ?? 0);
+      s.fk  += Number(p.fk  ?? 0);
+      s.fd  += Number(p.fd  ?? 0);
     }
   }
 
@@ -297,17 +302,16 @@ function showPlayerDetail(nick) {
   for (const r of rows) {
     const ag = (r.p.agent || "Unknown").trim();
     agentMap.set(ag, (agentMap.get(ag) || 0) + 1);
-
     const mp = (r.match.map || "Unknown").trim();
     mapMap.set(mp, (mapMap.get(mp) || 0) + 1);
   }
+
   const topAgents = [...agentMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
   const topMaps = [...mapMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
 
   box.style.display = "block";
   box.innerHTML = `
     <h3>${escapeHtml(nick)} 상세</h3>
-
     <div class="detailGrid">
       <div class="card2">
         <h3>요약</h3>
@@ -316,25 +320,11 @@ function showPlayerDetail(nick) {
         <div class="small">ACS ${fmt0(avg("acs"))} · ADR ${fmt1(avg("adr"))} · HS ${fmt1(avg("hs"))}%</div>
         <div class="small">FK ${fmt1(avg("fk"))} · FD ${fmt1(avg("fd"))}</div>
       </div>
-
       <div class="card2">
         <h3>많이 한 요원</h3>
         <div class="small">${topAgents.map(([ag,c])=>`${escapeHtml(ag)} (${c})`).join(" · ") || "-"}</div>
         <h3 style="margin-top:10px;">많이 한 맵</h3>
         <div class="small">${topMaps.map(([mp,c])=>`${escapeHtml(mp)} (${c})`).join(" · ") || "-"}</div>
-      </div>
-    </div>
-
-    <div style="margin-top:12px;">
-      <h3>최근 경기</h3>
-      <div class="small">
-        ${
-          rows.slice(-5).reverse().map(r => {
-            const wl = (r.p.team === r.match.winner) ? "W" : "L";
-            const d = (r.match.played_at || "").slice(0, 10);
-            return `${escapeHtml(d)} · ${escapeHtml(r.match.map)} · ${wl} · ${r.p.k}/${r.p.d}/${r.p.a} · ACS ${r.p.acs}`;
-          }).join("<br/>")
-        }
       </div>
     </div>
   `;
@@ -345,10 +335,12 @@ function setupTabs() {
   const tabPlayers = document.getElementById("tabPlayers");
   const tabAgents = document.getElementById("tabAgents");
   const tabMaps = document.getElementById("tabMaps");
-
   const panelPlayers = document.getElementById("panelPlayers");
   const panelAgents = document.getElementById("panelAgents");
   const panelMaps = document.getElementById("panelMaps");
+
+  // 탭 UI가 아직 없으면 그냥 스킵
+  if (!tabPlayers || !tabAgents || !tabMaps || !panelPlayers || !panelAgents || !panelMaps) return;
 
   function setTab(which) {
     const isPlayers = which === "players";
@@ -373,13 +365,16 @@ function setupTabs() {
 
 /* ---------- main ---------- */
 async function main() {
-  const statusEl = document.getElementById("status");
-  const matchCountEl = document.getElementById("matchCount");
-  const rawEl = document.getElementById("raw");
-  const sortKeyEl = document.getElementById("sortKey");
-  const searchEl = document.getElementById("search");
-
+  let statusEl = null;
   try {
+    // 필수 요소 먼저 체크(없으면 어떤 게 없는지 딱 찍히게)
+    statusEl = requireEl("status");
+    const matchCountEl = requireEl("matchCount");
+    const rawEl = requireEl("raw");
+
+    const sortKeyEl = document.getElementById("sortKey"); // 없으면 정렬 기능만 빠지게
+    const searchEl  = document.getElementById("search");
+
     const res = await fetch(DATA_URL, { cache: "no-store" });
     if (!res.ok) throw new Error(`fetch failed: ${res.status} ${res.statusText}`);
 
@@ -387,25 +382,27 @@ async function main() {
     if (!Array.isArray(matches)) throw new Error("matches.json must be an array");
 
     __matchesRef = matches;
-    matchCountEl.textContent = String(matches.length);
-    rawEl.textContent = JSON.stringify(matches.slice(0, 1), null, 2);
+
+    setText(matchCountEl, String(matches.length));
+    setText(rawEl, JSON.stringify(matches.slice(0, 1), null, 2));
 
     const allPlayers = summarizePlayers(matches);
 
-    // 이벤트 위임: tbody 한 번만 등록 (정렬/검색으로 rerender 되어도 클릭 유지)
+    // 닉네임 클릭 이벤트(위임)
     const rankTbody = document.querySelector("#rankTable tbody");
-    rankTbody.addEventListener("click", (e) => {
-      const target = e.target.closest(".link[data-nick]");
-      if (!target) return;
-      showPlayerDetail(target.dataset.nick);
-      // 상세가 있는 탭으로 자연스럽게 보여주기
-      const tabPlayers = document.getElementById("tabPlayers");
-      if (tabPlayers) tabPlayers.click();
-    });
+    if (rankTbody) {
+      rankTbody.addEventListener("click", (e) => {
+        const target = e.target.closest(".link[data-nick]");
+        if (!target) return;
+        showPlayerDetail(target.dataset.nick);
+        const tabPlayers = document.getElementById("tabPlayers");
+        if (tabPlayers) tabPlayers.click();
+      });
+    }
 
     const refreshPlayers = () => {
-      const key = sortKeyEl.value;
-      const q = searchEl.value.trim().toLowerCase();
+      const key = sortKeyEl ? sortKeyEl.value : "rating";
+      const q = searchEl ? searchEl.value.trim().toLowerCase() : "";
 
       let filtered = allPlayers;
       if (q) filtered = allPlayers.filter(s => s.nick.toLowerCase().includes(q));
@@ -414,18 +411,19 @@ async function main() {
       renderPlayersTable(sorted);
     };
 
-    sortKeyEl.addEventListener("change", refreshPlayers);
-    searchEl.addEventListener("input", refreshPlayers);
+    if (sortKeyEl) sortKeyEl.addEventListener("change", refreshPlayers);
+    if (searchEl) searchEl.addEventListener("input", refreshPlayers);
 
-    // 탭/요원/맵
     setupTabs();
     renderAgentTable(summarizeAgents(matches));
     renderMapTable(summarizeMaps(matches));
 
     refreshPlayers();
-    statusEl.textContent = "로드 완료";
+    setText(statusEl, "로드 완료");
   } catch (e) {
-    statusEl.textContent = `오류: ${e.message}`;
+    // status가 아예 없으면 화면에 못 찍으니, 콘솔로도 남김
+    console.error(e);
+    if (statusEl) setText(statusEl, `오류: ${e.message}`);
   }
 }
 
