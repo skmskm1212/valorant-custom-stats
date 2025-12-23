@@ -8,12 +8,65 @@
 </head>
 <body>
   <main class="wrap">
-    <h1>내전 통계</h1>
-    <p id="status">데이터 불러오는 중…</p>
+    <header class="top">
+      <h1>내전 통계</h1>
+      <div class="meta">
+        <span id="status">데이터 불러오는 중…</span>
+        <span class="pill">경기 <b id="matchCount">-</b></span>
+      </div>
+    </header>
 
     <section class="card">
-      <h2>경기 개수</h2>
-      <div id="matchCount">-</div>
+      <div class="row">
+        <h2>플레이어 랭킹</h2>
+        <div class="controls">
+          <label>
+            정렬
+            <select id="sortKey">
+              <option value="rating">지표점수</option>
+              <option value="winrate">승률</option>
+              <option value="games">경기수</option>
+              <option value="acs">평균 ACS</option>
+              <option value="adr">평균 ADR</option>
+              <option value="hs">평균 HS%</option>
+              <option value="kda">KDA</option>
+              <option value="fk">평균 FK</option>
+              <option value="fd">평균 FD</option>
+            </select>
+          </label>
+          <label>
+            검색
+            <input id="search" placeholder="닉네임 검색" />
+          </label>
+        </div>
+      </div>
+
+      <div class="tableWrap">
+        <table id="rankTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>닉네임</th>
+              <th>경기</th>
+              <th>승</th>
+              <th>승률</th>
+              <th>K / D / A</th>
+              <th>KDA</th>
+              <th>ACS</th>
+              <th>ADR</th>
+              <th>HS%</th>
+              <th>FK</th>
+              <th>FD</th>
+              <th>주요 요원</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <p class="hint">
+        지표점수 = (승률 + ACS + ADR + (FK-FD))를 간단히 합친 운영용 점수(초기 버전)
+      </p>
     </section>
 
     <section class="card">
