@@ -61,6 +61,35 @@ function summarize(matches) {
       s.agents.set(agent, (s.agents.get(agent) || 0) + 1);
     }
   }
+__matchesRef = matches;
+
+const tabPlayers = document.getElementById("tabPlayers");
+const tabAgents = document.getElementById("tabAgents");
+const tabMaps = document.getElementById("tabMaps");
+const panelPlayers = document.getElementById("panelPlayers");
+const panelAgents = document.getElementById("panelAgents");
+const panelMaps = document.getElementById("panelMaps");
+
+function setTab(which) {
+  const isPlayers = which === "players";
+  const isAgents = which === "agents";
+  const isMaps = which === "maps";
+
+  tabPlayers.classList.toggle("active", isPlayers);
+  tabAgents.classList.toggle("active", isAgents);
+  tabMaps.classList.toggle("active", isMaps);
+
+  panelPlayers.style.display = isPlayers ? "block" : "none";
+  panelAgents.style.display = isAgents ? "block" : "none";
+  panelMaps.style.display = isMaps ? "block" : "none";
+}
+
+tabPlayers.addEventListener("click", () => setTab("players"));
+tabAgents.addEventListener("click", () => setTab("agents"));
+tabMaps.addEventListener("click", () => setTab("maps"));
+
+renderAgentTable(summarizeAgents(matches));
+renderMapTable(summarizeMaps(matches));
 
   // finalize
   const out = [];
@@ -118,7 +147,7 @@ function renderTable(stats) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${idx + 1}</td>
-      <td class="nick">${escapeHtml(s.nick)}</td>
+      <td class="nick"><span class="link" data-nick="${escapeHtml(s.nick)}">${escapeHtml(s.nick)}</span></td>
       <td>${s.games}</td>
       <td>${s.wins}</td>
       <td>${pct(s.winrate)}</td>
@@ -133,6 +162,10 @@ function renderTable(stats) {
     `;
     tbody.appendChild(tr);
   });
+  tbody.querySelectorAll(".link[data-nick]").forEach(el => {
+  el.addEventListener("click", () => showPlayerDetail(el.dataset.nick));
+});
+
 }
 function summarizeAgents(matches) {
   const m = new Map(); // agent -> stats
@@ -280,7 +313,127 @@ debugEl.textContent =
     statusEl.textContent = `오류: ${e.message}`;
   }
 }
+function renderAgentTable(rows) {
+  const tbody = document.querySelector("#agentTable tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  rows.forEach((s, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td>${escapeHtml(s.agent)}</td>
+      <td>${s.picks}</td>
+      <td>${pct(s.pickRate)}</td>
+      <td>${pct(s.winrate)}</td>
+      <td>${fmt0(s.avgAcs)}</td>
+      <td>${fmt1(s.avgAdr)}</td>
+      <td>${fmt1(s.avgHs)}</td>
+      <td>${fmt1(s.avgFk)}</td>
+      <td>${fmt1(s.avgFd)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderMapTable(rows) {
+  const tbody = document.querySelector("#mapTable tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  rows.forEach((s, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td>${escapeHtml(s.map)}</td>
+      <td>${s.matches}</td>
+      <td>${pct(s.winrate)}</td>
+      <td>${fmt0(s.avgAcs)}</td>
+      <td>${fmt1(s.avgAdr)}</td>
+      <td>${fmt1(s.avgHs)}</td>
+      <td>${fmt1(s.avgFk)}</td>
+      <td>${fmt1(s.avgFd)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+let __matchesRef = [];
+
+function showPlayerDetail(nick) {
+  const box = document.getElementById("playerDetail");
+  if (!box) return;
+
+  // 해당 플레이어의 모든 기록 모으기
+  const rows = [];
+  for (const m of __matchesRef) {
+    for (const p of (m.players || [])) {
+      if ((p.nick || "").trim() === nick) {
+        rows.push({ match: m, p });
+      }
+    }
+  }
+
+  const games = rows.length;
+  const wins = rows.filter(r => r.p.team === r.match.winner).length;
+
+  const sum = (key) => rows.reduce((acc, r) => acc + Number(r.p[key] ?? 0), 0);
+  const K = sum("k"), D = sum("d"), A = sum("a");
+
+  const avg = (key) => games ? sum(key) / games : 0;
+
+  // 요원별
+  const agentMap = new Map();
+  for (const r of rows) {
+    const ag = (r.p.agent || "Unknown").trim();
+    agentMap.set(ag, (agentMap.get(ag) || 0) + 1);
+  }
+  const agentList = [...agentMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  // 맵별
+  const mapMap = new Map();
+  for (const r of rows) {
+    const mp = (r.match.map || "Unknown").trim();
+    mapMap.set(mp, (mapMap.get(mp) || 0) + 1);
+  }
+  const mapList = [...mapMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  const kda = D > 0 ? (K + A) / D : (K + A);
+
+  box.style.display = "block";
+  box.innerHTML = `
+    <h3>${escapeHtml(nick)} 상세</h3>
+    <div class="detailGrid">
+      <div class="card2">
+        <h3>요약</h3>
+        <div class="small">경기 ${games} / 승 ${wins} / 승률 ${pct(games?wins/games:0)}</div>
+        <div class="small">K/D/A: ${K} / ${D} / ${A} (KDA ${fmt1(kda)})</div>
+        <div class="small">ACS ${fmt0(avg("acs"))} · ADR ${fmt1(avg("adr"))} · HS ${fmt1(avg("hs"))}%</div>
+        <div class="small">FK ${fmt1(avg("fk"))} · FD ${fmt1(avg("fd"))}</div>
+      </div>
+      <div class="card2">
+        <h3>많이 한 요원</h3>
+        <div class="small">${agentList.map(([ag,c])=>`${escapeHtml(ag)} (${c})`).join(" · ") || "-"}</div>
+        <h3 style="margin-top:10px;">많이 한 맵</h3>
+        <div class="small">${mapList.map(([mp,c])=>`${escapeHtml(mp)} (${c})`).join(" · ") || "-"}</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <h3>최근 경기</h3>
+      <div class="small">
+        ${rows
+          .slice(-5)
+          .reverse()
+          .map(r => {
+            const win = r.p.team === r.match.winner ? "W" : "L";
+            return `${r.match.played_at?.slice(0,10) || ""} · ${escapeHtml(r.match.map)} · ${win} · ${r.p.k}/${r.p.d}/${r.p.a} · ACS ${r.p.acs}`;
+          })
+          .join("<br/>")}
+      </div>
+    </div>
+  `;
+}
 
 main();
+
 
 
