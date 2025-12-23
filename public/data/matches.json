@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "match_id": "test-001",
+    "played_at": "2025-12-23T21:30:00+09:00",
+    "map": "Ascent",
+    "score_a": 13,
+    "score_b": 11,
+    "winner": "A",
+    "players": [
+      { "nick": "AAA#KR1", "team": "A", "agent": "Jett", "k": 22, "d": 16, "a": 5, "acs": 260, "adr": 155.4, "hs": 23.1, "fk": 4, "fd": 2 },
+      { "nick": "BBB#KR1", "team": "A", "agent": "Sova", "k": 15, "d": 14, "a": 8, "acs": 210, "adr": 128.0, "hs": 18.0, "fk": 1, "fd": 2 },
+      { "nick": "CCC#KR1", "team": "A", "agent": "Omen", "k": 18, "d": 17, "a": 6, "acs": 230, "adr": 140.2, "hs": 19.5, "fk": 2, "fd": 3 },
+      { "nick": "DDD#KR1", "team": "A", "agent": "Killjoy", "k": 12, "d": 15, "a": 9, "acs": 180, "adr": 110.3, "hs": 16.0, "fk": 0, "fd": 2 },
+      { "nick": "EEE#KR1", "team": "A", "agent": "Skye", "k": 14, "d": 16, "a": 7, "acs": 195, "adr": 120.0, "hs": 21.2, "fk": 1, "fd": 2 },
+
+      { "nick": "FFF#KR1", "team": "B", "agent": "Raze", "k": 20, "d": 18, "a": 4, "acs": 245, "adr": 150.1, "hs": 20.4, "fk": 3, "fd": 3 },
+      { "nick": "GGG#KR1", "team": "B", "agent": "Sage", "k": 11, "d": 17, "a": 10, "acs": 175, "adr": 105.7, "hs": 14.8, "fk": 0, "fd": 3 },
+      { "nick": "HHH#KR1", "team": "B", "agent": "Brimstone", "k": 16, "d": 17, "a": 5, "acs": 205, "adr": 125.6, "hs": 17.9, "fk": 1, "fd": 2 },
+      { "nick": "III#KR1", "team": "B", "agent": "Cypher", "k": 13, "d": 16, "a": 6, "acs": 190, "adr": 115.2, "hs": 22.0, "fk": 1, "fd": 2 },
+      { "nick": "JJJ#KR1", "team": "B", "agent": "Phoenix", "k": 17, "d": 18, "a": 3, "acs": 215, "adr": 132.9, "hs": 24.5, "fk": 2, "fd": 3 }
+    ]
+  }
+]
