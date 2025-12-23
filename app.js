@@ -134,6 +134,85 @@ function renderTable(stats) {
     tbody.appendChild(tr);
   });
 }
+function summarizeAgents(matches) {
+  const m = new Map(); // agent -> stats
+  let totalPicks = 0;
+
+  for (const match of matches) {
+    const winner = match.winner;
+    for (const p of (match.players || [])) {
+      const agent = (p.agent || "Unknown").trim();
+      if (!m.has(agent)) {
+        m.set(agent, { agent, picks:0, wins:0, games:0, acs:0, adr:0, hs:0, fk:0, fd:0 });
+      }
+      const s = m.get(agent);
+      s.picks += 1;
+      totalPicks += 1;
+      s.games += 1;
+      if (p.team === winner) s.wins += 1;
+
+      s.acs += Number(p.acs ?? 0);
+      s.adr += Number(p.adr ?? 0);
+      s.hs  += Number(p.hs ?? 0);
+      s.fk  += Number(p.fk ?? 0);
+      s.fd  += Number(p.fd ?? 0);
+    }
+  }
+
+  const out = [];
+  for (const s of m.values()) {
+    s.pickRate = totalPicks ? s.picks / totalPicks : 0;
+    s.winrate  = s.games ? s.wins / s.games : 0;
+    s.avgAcs = s.games ? s.acs / s.games : 0;
+    s.avgAdr = s.games ? s.adr / s.games : 0;
+    s.avgHs  = s.games ? s.hs / s.games : 0;
+    s.avgFk  = s.games ? s.fk / s.games : 0;
+    s.avgFd  = s.games ? s.fd / s.games : 0;
+    out.push(s);
+  }
+
+  out.sort((a,b)=> (b.picks - a.picks) || (b.winrate - a.winrate) || a.agent.localeCompare(b.agent));
+  return out;
+}
+
+function summarizeMaps(matches) {
+  const m = new Map(); // map -> stats
+
+  for (const match of matches) {
+    const mapName = (match.map || "Unknown").trim();
+    if (!m.has(mapName)) {
+      m.set(mapName, { map: mapName, matches:0, acs:0, adr:0, hs:0, fk:0, fd:0, wins:0, games:0 });
+    }
+    const s = m.get(mapName);
+    s.matches += 1;
+
+    // 맵 통계는 "전체 플레이어 평균"으로 집계(맵 난이도/스코어 경향 보려는 용도)
+    const winner = match.winner;
+    for (const p of (match.players || [])) {
+      s.games += 1;
+      if (p.team === winner) s.wins += 1;
+      s.acs += Number(p.acs ?? 0);
+      s.adr += Number(p.adr ?? 0);
+      s.hs  += Number(p.hs ?? 0);
+      s.fk  += Number(p.fk ?? 0);
+      s.fd  += Number(p.fd ?? 0);
+    }
+  }
+
+  const out = [];
+  for (const s of m.values()) {
+    s.winrate = s.games ? s.wins / s.games : 0;
+    s.avgAcs = s.games ? s.acs / s.games : 0;
+    s.avgAdr = s.games ? s.adr / s.games : 0;
+    s.avgHs  = s.games ? s.hs / s.games : 0;
+    s.avgFk  = s.games ? s.fk / s.games : 0;
+    s.avgFd  = s.games ? s.fd / s.games : 0;
+    out.push(s);
+  }
+
+  out.sort((a,b)=> (b.matches - a.matches) || (b.avgAcs - a.avgAcs) || a.map.localeCompare(b.map));
+  return out;
+}
 
 function escapeHtml(str) {
   return String(str)
@@ -203,4 +282,5 @@ debugEl.textContent =
 }
 
 main();
+
 
