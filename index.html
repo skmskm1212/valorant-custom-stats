@@ -1,125 +1,92 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Valorant Custom Stats</title>
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css"/>
 </head>
 <body>
-  <main class="wrap">
-    <header class="top">
-      <h1>내전 통계</h1>
-      <div class="meta">
-        <span id="status">데이터 불러오는 중…</span>
-        <span class="pill">경기 <b id="matchCount">-</b></span>
-      </div>
-    </header>
+  <header class="wrap">
+    <h1>내전 전적 변환기</h1>
+    <p class="muted">전적 사이트 표를 붙여넣으면 matches.json에 넣을 JSON을 만들어줘.</p>
+  </header>
 
-    <!-- 플레이어 랭킹 -->
+  <main class="wrap grid">
     <section class="card">
-      <div class="row">
-        <h2>플레이어 랭킹</h2>
-        <div class="controls">
-          <label class="ctl">
-            정렬
-            <select id="sortKey">
-              <option value="rating">지표점수</option>
-              <option value="winrate">승률</option>
-              <option value="games">경기수</option>
-              <option value="acs">평균 ACS</option>
-              <option value="adr">평균 ADR</option>
-              <option value="hs">평균 HS%</option>
-              <option value="kda">KDA</option>
-              <option value="fk">평균 FK</option>
-              <option value="fd">평균 FD</option>
-            </select>
-          </label>
+      <h2>경기 메타</h2>
 
-          <label class="ctl">
-            검색
-            <input id="search" placeholder="닉네임 검색" />
-          </label>
+      <div class="row">
+        <label>match id</label>
+        <input id="matchId" placeholder="예: 2025-12-24-001" />
+      </div>
+
+      <div class="row">
+        <label>playedAt</label>
+        <input id="playedAt" placeholder="예: 2025-12-24T12:13:00+09:00" />
+      </div>
+
+      <div class="row">
+        <label>map</label>
+        <input id="map" placeholder="예: Ascent (모르면 비워도 됨)" />
+      </div>
+
+      <div class="row">
+        <label>mode</label>
+        <input id="mode" value="custom" />
+      </div>
+
+      <div class="row2">
+        <div class="row">
+          <label>score ally</label>
+          <input id="scoreAlly" inputmode="numeric" placeholder="예: 13" />
+        </div>
+        <div class="row">
+          <label>score enemy</label>
+          <input id="scoreEnemy" inputmode="numeric" placeholder="예: 11" />
         </div>
       </div>
 
-      <div class="tableWrap">
-        <table id="rankTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>닉네임</th>
-              <th>경기</th>
-              <th>승</th>
-              <th>승률</th>
-              <th>K / D / A</th>
-              <th>KDA</th>
-              <th>ACS</th>
-              <th>ADR</th>
-              <th>HS%</th>
-              <th>FK</th>
-              <th>FD</th>
-              <th>주요 요원</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="actions">
+        <button id="btnConvert">변환</button>
+        <button id="btnClear" class="ghost">초기화</button>
       </div>
 
-      <p class="hint">
-        지표점수(초기) = 승률 + (ACS/ADR 정규화) + (FK-FD) 보정
+      <p class="muted small">
+        저장할 때 무시하는 값: OP Score, KAST, MK
       </p>
     </section>
 
-    <!-- 통계 탭 + 개인 상세 -->
     <section class="card">
-      <div class="row">
-        <h2>통계</h2>
-        <div class="controls">
-          <button type="button" id="tabPlayers" class="tab active">플레이어</button>
-          <button type="button" id="tabAgents" class="tab">요원</button>
-          <button type="button" id="tabMaps" class="tab">맵</button>
-        </div>
+      <h2>원문 붙여넣기</h2>
+      <textarea id="rawText" placeholder="전적 사이트에서 한 경기 결과표 전체를 복사해서 여기에 붙여넣기"></textarea>
+      <p class="muted small">팁: 승리아군/패배적군 헤더 포함해서 통째로 붙여넣기</p>
+    </section>
+
+    <section class="card">
+      <h2>변환 결과 (match 객체)</h2>
+      <textarea id="outJson" readonly placeholder="여기에 JSON이 생성됨"></textarea>
+
+      <div class="actions">
+        <button id="btnCopy" class="ghost">복사</button>
+        <button id="btnDownload" class="ghost">output.json 다운로드</button>
       </div>
 
-      <div id="panelPlayers" class="panel">
-        <p class="hint">플레이어 랭킹에서 <b>닉네임 클릭</b>하면 아래에 상세가 표시됨.</p>
-        <div id="playerDetail" class="detailBox" style="display:none;"></div>
-      </div>
+      <details class="mt">
+        <summary class="muted">matches.json에 붙일 때 형태(append용) 보기</summary>
+        <textarea id="outAppend" readonly placeholder="배열에 추가할 때 쓰는 형태"></textarea>
+      </details>
 
-      <div id="panelAgents" class="panel" style="display:none;">
-        <div class="tableWrap">
-          <table id="agentTable">
-            <thead>
-              <tr>
-                <th>#</th><th>요원</th><th>픽(명)</th><th>픽률</th><th>승률</th>
-                <th>ACS</th><th>ADR</th><th>HS%</th><th>FK</th><th>FD</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="panelMaps" class="panel" style="display:none;">
-        <div class="tableWrap">
-          <table id="mapTable">
-            <thead>
-              <tr>
-                <th>#</th><th>맵</th><th>경기</th><th>승률</th>
-                <th>ACS</th><th>ADR</th><th>HS%</th><th>FK</th><th>FD</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+      <div class="note mt">
+        <div class="muted small">
+          GitHub에서 바로 저장하려면: repo → matches.json → ✏️ Edit → 아래에 붙여넣기 → Commit.
         </div>
       </div>
     </section>
 
-    <!-- 원본 -->
     <section class="card">
-      <h2>원본(JSON) 확인</h2>
-      <pre id="raw"></pre>
+      <h2>상태</h2>
+      <pre id="status" class="status">대기중</pre>
     </section>
   </main>
 
